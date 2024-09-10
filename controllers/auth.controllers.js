@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const otpService = require("../utils/otp.utils");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
-
+const emailService = require("../utils/email.utils");
 const signup = async (req, res) => {
   const { name, houseNumber, phoneNumber, email, password } = req.body;
 
@@ -105,52 +105,63 @@ const login = async (req, res) => {
 };
 
 const forgotPassword = async (req, res) => {
-  const { phoneNumber } = req.body;
+  const { email } = req.body;
 
   try {
-    const user = await User.findOne({ phoneNumber });
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     // Generate OTP and expiry
-    const otp = otpService.generateOTP();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = Date.now() + 10 * 60 * 1000; // OTP expires in 10 minutes
 
+    // Save OTP and expiration to user
     user.otp = otp;
     user.otpExpiresAt = otpExpiresAt;
     await user.save();
 
-    // Send OTP via SMS
-    await sendSMS(phoneNumber, `Your password reset OTP is: ${otp}`);
+    // Send OTP via email
+    await emailService.sendEmail(
+      user.email, // recipient's email
+      "Reset Password OTP", // subject
+      `Your OTP is: ${otp}` // email body
+    );
 
-    res.status(200).json({ message: "OTP sent to your phone" });
+    res.status(200).json({ message: "OTP sent to your email" });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", err });
+    console.error(err);
   }
 };
 
 const resetPassword = async (req, res) => {
-  const { phoneNumber, otp, newPassword } = req.body;
+  const { email, otp, newPassword } = req.body;
 
   try {
-    const user = await User.findOne({ phoneNumber });
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.otp !== otp || user.otpExpiresAt > Date.now()) {
-      return res.status(400).json({ message: "Invalid OTP" });
+    // Check if OTP is valid and not expired
+    if (user.otp !== otp || user.otpExpiresAt < Date.now()) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
+    // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.otp = undefined; // Clear OTP after successful password reset
+
+    // Update the user's password and clear OTP fields
+    user.password = hashedPassword;
+    user.otp = undefined;
     user.otpExpiresAt = undefined;
     await user.save();
 
-    res.status(200).json({ message: "Password reset successful" });
+    res.status(200).json({ message: "Password reset successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error });
   }
 };
-module.exports = { signup, verifyOTP, login };
+module.exports = { signup, verifyOTP, login, forgotPassword, resetPassword };
