@@ -11,7 +11,13 @@ const authRoutes = require("./routes/auth.routes");
 
 connectDB();
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Replace with your frontend URL
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
 //import routes
 app.use("/api/auth", authRoutes);
 app.listen(PORT, () => {
