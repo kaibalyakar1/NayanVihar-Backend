@@ -76,32 +76,43 @@ const verifyOTP = async (req, res) => {
     console.log(err);
   }
 };
-
 const login = async (req, res) => {
   const { phoneNumber, password } = req.body;
 
   try {
+    // Find user by phone number
     const user = await User.findOne({ phoneNumber });
+
+    // Check if user exists and is verified
     if (!user || !user.isVerified) {
       return res
         .status(404)
         .json({ message: "User not found or not verified" });
     }
 
+    // Compare the provided password with the hashed password in the database
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    // Generate JWT token including userId, phoneNumber, and role
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      {
+        userId: user._id,
+        phoneNumber: user.phoneNumber, // Include phoneNumber in the payload
+        role: user.role,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );
 
+    // Respond with success message and token
     res.status(200).json({ message: "Login successful", token });
   } catch (err) {
-    res.status(500).json({ message: "Something went wrong", err });
+    res
+      .status(500)
+      .json({ message: "Something went wrong", error: err.message });
   }
 };
 

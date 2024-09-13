@@ -8,6 +8,8 @@ const PORT = process.env.PORT || 5000;
 dotenv.config();
 const app = express();
 const authRoutes = require("./routes/auth.routes");
+const paymentRoutes = require("./routes/payment.routes");
+const userRoutes = require("./routes/user.route");
 
 connectDB();
 app.use(express.json());
@@ -20,6 +22,8 @@ app.use(
 );
 //import routes
 app.use("/api/auth", authRoutes);
+app.use("/api/payment", paymentRoutes);
+app.use("/api/user", userRoutes);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
