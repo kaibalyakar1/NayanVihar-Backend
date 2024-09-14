@@ -10,6 +10,7 @@ const app = express();
 const authRoutes = require("./routes/auth.routes");
 const paymentRoutes = require("./routes/payment.routes");
 const userRoutes = require("./routes/user.route");
+const adminRoutes = require("./routes/admin.routes");
 
 connectDB();
 app.use(express.json());
@@ -24,6 +25,7 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/admin", adminRoutes);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

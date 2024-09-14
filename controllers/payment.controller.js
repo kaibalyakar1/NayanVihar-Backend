@@ -2,7 +2,7 @@ const Payment = require("../models/payments.models");
 const razorpay = require("../config/razorpay");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
-
+const User = require("../models/users.models");
 console.log("Razorpay Key ID:", process.env.RAZORPAY_KEY_ID);
 console.log("Razorpay Key Secret:", process.env.RAZORPAY_KEY_SECRET);
 
@@ -26,6 +26,8 @@ const monthMapping = {
 };
 const initiatePayment = async (req, res) => {
   const { amount, monthmyear, phoneNumber } = req.body;
+
+  const userz = await User.findOne({ phoneNumber });
 
   if (!amount || !monthmyear || !phoneNumber) {
     return res.status(400).json({ message: "All fields are required" });
@@ -52,16 +54,21 @@ const initiatePayment = async (req, res) => {
       currency: "INR",
       receipt: receipt,
     };
+    const Userid = userz._id;
 
+    // console.log(Userid, "Userid");
+    const realUserId = await User.findOne({ _id: Userid._id });
+    // console.log(realUserId, "realUserId");
     const order = await razorpayInstance.orders.create(options);
 
     const newPayment = new Payment({
-      phoneNumber,
+      phoneNumber: realUserId.phoneNumber,
+      userId: realUserId._id,
       month,
       year,
       amount,
       razorpayPaymentId: order.id,
-      status: "Pending",
+      status: "Paid",
     });
 
     await newPayment.save();
@@ -69,8 +76,8 @@ const initiatePayment = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Payment initiated successfully",
-      orderId: order.id,
-      amount: amount,
+
+      newPayment: newPayment,
     });
   } catch (error) {
     console.error("Error initiating payment:", error);
