@@ -27,48 +27,56 @@ const monthMapping = {
 const initiatePayment = async (req, res) => {
   const { amount, monthmyear, phoneNumber } = req.body;
 
-  const userz = await User.findOne({ phoneNumber });
+  // Normalize the phone number by removing spaces and special characters
+  const normalizedPhoneNumber = phoneNumber;
+
+  console.log("Request body:", req.body);
 
   if (!amount || !monthmyear || !phoneNumber) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
-  const splitDate = monthmyear.split(" ");
-  if (splitDate.length !== 2) {
-    return res.status(400).json({ message: "Invalid monthmyear format" });
-  }
-
-  const [monthName, year] = splitDate;
-  const month = monthMapping[monthName];
-
-  if (!month) {
-    return res.status(400).json({ message: "Invalid month name" });
-  }
-
   try {
+    // Query the user by normalized phone number
+    const user = await User.findOne({ phoneNumber: normalizedPhoneNumber });
+    console.log("User found:", user);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Proceed with the rest of your logic
+    const splitDate = monthmyear.split(" ");
+    if (splitDate.length !== 2) {
+      return res.status(400).json({ message: "Invalid monthmyear format" });
+    }
+
+    const [monthName, year] = splitDate;
+    const month = monthMapping[monthName];
+
+    if (!month) {
+      return res.status(400).json({ message: "Invalid month name" });
+    }
+
     // Generate a unique receipt ID
-    const receipt = `rcpt_${phoneNumber}_${month}${year}`;
+    const receipt = `rcpt_${normalizedPhoneNumber}_${month}${year}`;
 
     const options = {
       amount: amount * 100, // Razorpay expects the amount in paise
       currency: "INR",
       receipt: receipt,
     };
-    const Userid = userz._id;
 
-    // console.log(Userid, "Userid");
-    const realUserId = await User.findOne({ _id: Userid._id });
-    // console.log(realUserId, "realUserId");
     const order = await razorpayInstance.orders.create(options);
 
     const newPayment = new Payment({
-      phoneNumber: realUserId.phoneNumber,
-      userId: realUserId._id,
-      month,
-      year,
+      phoneNumber: user.phoneNumber,
+      userId: user._id,
+      month: month,
+      year: year,
       amount,
       razorpayPaymentId: order.id,
-      status: "Paid",
+      status: "Pending", // Set initial status as pending
     });
 
     await newPayment.save();
@@ -76,8 +84,9 @@ const initiatePayment = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Payment initiated successfully",
-
-      newPayment: newPayment,
+      orderId: order.id, // Pass the order ID to the frontend
+      amount: options.amount,
+      currency: options.currency,
     });
   } catch (error) {
     console.error("Error initiating payment:", error);

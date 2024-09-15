@@ -26,7 +26,10 @@ const getAllUsersWithPayments = async (req, res) => {
               phoneNumber: user.phoneNumber,
               email: user.email,
             },
-            payments: payments,
+            payments: {
+              payments: payments.month,
+            },
+            payments: [],
           };
         } catch (error) {
           console.error(`Error fetching payments for user ${user._id}:`, error);
@@ -36,6 +39,9 @@ const getAllUsersWithPayments = async (req, res) => {
               houseNumber: user.houseNumber,
               phoneNumber: user.phoneNumber,
               email: user.email,
+            },
+            payments: {
+              payments: payments.month,
             },
             payments: [],
           };
