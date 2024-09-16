@@ -7,17 +7,17 @@ const getAllUsersWithPayments = async (req, res) => {
     // Fetch all users
     const users = await User.find();
 
-    console.log("Fetched Users:", users); // Debugging line
+    // console.log("Fetched Users:", users); // Debugging line///////
 
     const usersWithPayments = await Promise.all(
       users.map(async (user) => {
         try {
-          console.log(`Fetching payments for user ${user._id}`); // Debugging line
+          // console.log(`Fetching payments for user ${user._id}`); // Debugging line
           const payments = await Payment.find({ userId: user._id }).select(
             "month year amount status paidDate razorpayPaymentId"
           );
 
-          console.log(`Payments for user ${user._id}:`, payments); // Debugging line
+          console.log(`Payments for user ${user._id}:`, payments); // Debugging line/
 
           return {
             user: {

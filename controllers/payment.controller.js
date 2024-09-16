@@ -3,8 +3,8 @@ const razorpay = require("../config/razorpay");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const User = require("../models/users.models");
-console.log("Razorpay Key ID:", process.env.RAZORPAY_KEY_ID);
-console.log("Razorpay Key Secret:", process.env.RAZORPAY_KEY_SECRET);
+// console.log("Razorpay Key ID:", process.env.RAZORPAY_KEY_ID);
+// console.log("Razorpay Key Secret:", process.env.RAZORPAY_KEY_SECRET);
 
 const razorpayInstance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -30,7 +30,7 @@ const initiatePayment = async (req, res) => {
   // Normalize the phone number by removing spaces and special characters
   const normalizedPhoneNumber = phoneNumber;
 
-  console.log("Request body:", req.body);
+  // console.log("Request body:", req.body);
 
   if (!amount || !monthmyear || !phoneNumber) {
     return res.status(400).json({ message: "All fields are required" });
@@ -39,7 +39,7 @@ const initiatePayment = async (req, res) => {
   try {
     // Query the user by normalized phone number
     const user = await User.findOne({ phoneNumber: normalizedPhoneNumber });
-    console.log("User found:", user);
+    // console.log("User found:", user);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });

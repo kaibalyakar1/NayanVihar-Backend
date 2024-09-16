@@ -20,7 +20,7 @@ const sendEmail = async (to, subject, text) => {
 
   try {
     await transport.sendMail(mailOptions);
-    console.log("Email sent successfully");
+    // console.log("Email sent successfully");
   } catch (err) {
     console.error("Failed to send email", err);
     throw err; // Re-throw the error to handle it in your controllers
