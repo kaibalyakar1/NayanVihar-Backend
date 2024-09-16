@@ -1,5 +1,7 @@
 const User = require("../models/users.models");
 const XLSX = require("xlsx");
+const mongoose = require("mongoose");
+const Payment = require("../models/payments.models");
 const getUserProfile = async (req, res) => {
   try {
     // Extract phoneNumber from the decoded token (req.user)
@@ -32,6 +34,13 @@ const getUserProfile = async (req, res) => {
 // Ensure you have required the XLSX module
 
 const downloadSelf = async (req, res) => {
+  try {
+    const userId = req.user.id; // Assuming user ID is attached to the request object
+    const payments = await PaymentModel.find({ userId });
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching payments" });
+  }
   try {
     // Extract userId from req.user (assuming authMiddleware attaches it)
     const userId = req.user.id;
@@ -85,7 +94,30 @@ const downloadSelf = async (req, res) => {
   }
 };
 
+// Import mongoose to use Types.ObjectId
+
+const getUserPayments = async (req, res) => {
+  try {
+    const userId = req.user.userId; // Use the userId from the decoded token
+    // Convert the userId to ObjectId
+    const objectId = new mongoose.Types.ObjectId(userId);
+
+    const payments = await Payment.find({ userId: objectId }); // Query using ObjectId
+    if (!payments.length) {
+      return res
+        .status(404)
+        .json({ message: "No payments found for this user" });
+    }
+
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+    console.log(error);
+  }
+};
+
 module.exports = {
   getUserProfile,
   downloadSelf,
+  getUserPayments,
 };
