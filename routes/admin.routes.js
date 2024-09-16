@@ -9,4 +9,5 @@ router.get(
   auth,
   adminController.getAllUsersWithPayments
 );
+router.get("/download-all", verifyAdmin, auth, adminController.downloadAll);
 module.exports = router;

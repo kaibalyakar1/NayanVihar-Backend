@@ -1,6 +1,6 @@
 const User = require("../models/users.models");
 const Payment = require("../models/payments.models");
-
+const XLSX = require("xlsx");
 // Fetch all users with payment history
 const getAllUsersWithPayments = async (req, res) => {
   try {
@@ -58,4 +58,37 @@ const getAllUsersWithPayments = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsersWithPayments };
+const downloadAll = async (req, res) => {
+  try {
+    const users = await User.find();
+    if (users.length === 0) {
+      return res.status(404).json({ message: "No users found" });
+    }
+
+    const wsData = users.map((user) => ({
+      Name: user.name,
+      Email: user.email,
+      PhoneNo: user.phoneNumber,
+      HouseNo: user.houseNumber,
+      // Add other fields as necessary
+    }));
+
+    // Create a new workbook and worksheet
+    const ws = XLSX.utils.json_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Users");
+
+    // Write the file and send it to the client
+    res.setHeader("Content-Disposition", "attachment; filename=All_Users.xlsx");
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.end(XLSX.write(wb, { bookType: "xlsx", type: "buffer" }));
+  } catch (error) {
+    console.error("Error generating Excel file:", error);
+    res.status(500).json({ message: "Error generating Excel file" });
+  }
+};
+
+module.exports = { getAllUsersWithPayments, downloadAll };
