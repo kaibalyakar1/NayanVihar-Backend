@@ -76,7 +76,7 @@ const initiatePayment = async (req, res) => {
       year: year,
       amount,
       razorpayPaymentId: order.id,
-      status: "Pending", // Set initial status as pending
+      status: "Paid", // Set initial status as pending
     });
 
     await newPayment.save();
